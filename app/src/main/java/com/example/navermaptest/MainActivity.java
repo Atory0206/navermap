@@ -76,26 +76,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MyLocationSource locationSource = new MyLocationSource();
         naverMap.setLocationSource(locationSource);
 
-        MarkerInfo markerInfo = new MarkerInfo("제목", "설명");
+        MarkerInfo markerInfo1 = new MarkerInfo("1빵", "도서관");
         Marker marker1 = new Marker();
         marker1.setPosition(coord);
         marker1.setMap(naverMap);      //마커 정보
-        marker1.setTag(markerInfo); //마커 객체 정보 연결
+        marker1.setTag(markerInfo1); //마커 객체 정보 연결
 
+
+        MarkerInfo markerInfo2 = new MarkerInfo("2빵", "공대건물");
         Marker marker2 = new Marker();
         marker2.setPosition(coord2);
         marker2.setMap(naverMap);      //마커 정보
-        marker2.setTag(markerInfo); //마커 객체 정보 연결
+        marker2.setTag(markerInfo2); //마커 객체 정보 연결
 
         InfoWindow infoWindow = new InfoWindow();//인포윈도우객체생성
 
-        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(this) {
-            @NonNull
-            @Override
-            public CharSequence getText(@NonNull InfoWindow infoWindow) {
-                return "123";
-            }
-        });
+
 
         naverMap.setOnMapClickListener((pointF, latLng) -> {
             infoWindow.close();
@@ -103,22 +99,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 // 마커를 클릭하면:
         Overlay.OnClickListener listener = overlay -> {
-            Marker marker = (Marker)overlay;
+            Marker marker = (Marker) overlay;
+            MarkerInfo info = (MarkerInfo) marker.getTag();
 
             if (marker.getInfoWindow() == null) {
-                // 현재 마커에 정보 창이 열려있지 않을 경우 엶
+                infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(this) {
+                    @NonNull
+                    @Override
+                    public CharSequence getText(@NonNull InfoWindow infoWindow) {
+                        return info != null ? info.getTitle() + "\n" + info.getDescription() : "No info";
+                    }
+                });
                 infoWindow.open(marker);
             } else {
-                // 이미 현재 마커에 정보 창이 열려있을 경우 닫음
                 infoWindow.close();
             }
-
             return true;
         };
 
         marker1.setOnClickListener(listener);
         marker2.setOnClickListener(listener);
-
     }
 
+    static class MarkerInfo {
+        private final String title;
+        private final String description;
+
+        public MarkerInfo(String title, String description) {
+            this.title = title;
+            this.description = description;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
 }
