@@ -1,10 +1,13 @@
 package com.example.navermaptest;
 
-
-
+import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.Manifest;
 
@@ -31,7 +34,6 @@ import com.naver.maps.map.overlay.Overlay;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.naver.maps.map.widget.LocationButtonView;
 
-
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
 
     private NaverMap naverMap;
@@ -48,18 +50,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
-        });                         //  화면관리 도와줌 기본적으로 있던것
+        });
 
         FragmentManager fm = getSupportFragmentManager();
         MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.map);
         if (mapFragment == null) {
             mapFragment = MapFragment.newInstance();
-            fm.beginTransaction().add(R.id.map, mapFragment).commit();    // 지도객체
+            fm.beginTransaction().add(R.id.map, mapFragment).commit();
         }
 
-        mapFragment.getMapAsync(this); //콜백 메서드 호출
+        mapFragment.getMapAsync(this);
 
-        locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE); //현재 위치 추적
+        locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
     }
 
     @Override
@@ -67,78 +69,82 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                            @NonNull String[] permissions,  @NonNull int[] grantResults) {
         if (locationSource.onRequestPermissionsResult(
                 requestCode, permissions, grantResults)) {
-            if (!locationSource.isActivated()) { // 권한 거부됨
+            if (!locationSource.isActivated()) {
                 naverMap.setLocationTrackingMode(LocationTrackingMode.None);
             }
             return;
         }
         super.onRequestPermissionsResult(
-                requestCode, permissions, grantResults); //현재 위치 추적
+                requestCode, permissions, grantResults);
     }
 
     @UiThread
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
-        // 네이버 지도가 준비되었을 때 호출되는 콜백 메서드입니다.
-        // 여기에 지도 초기화 및 기타 작업을 수행합니다.
-
         this.naverMap = naverMap;
         naverMap.setLocationSource(locationSource);
 
-        // 위치 권한 요청
         ActivityCompat.requestPermissions(this, new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
 
-        // 위치 추적 모드 설정
         naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
 
         LocationOverlay locationOverlay = naverMap.getLocationOverlay();
-        locationOverlay.setVisible(true); //  위치오버레이
+        locationOverlay.setVisible(true);
 
         LatLng coord = new LatLng(37.5670135, 126.9783740);
         LatLng coord2 = new LatLng(37.566, 126.9783740);
 
-        UiSettings uiSettings = naverMap.getUiSettings(); //UI 활성화
-        uiSettings.setLocationButtonEnabled(true); // 자기 위치 버튼 활성화
-
+        UiSettings uiSettings = naverMap.getUiSettings();
+        uiSettings.setLocationButtonEnabled(true);
 
         MarkerInfo markerInfo1 = new MarkerInfo("1빵", "도서관");
         Marker marker1 = new Marker();
         marker1.setPosition(coord);
-        marker1.setMap(naverMap);      //마커 정보
-        marker1.setTag(markerInfo1); //마커 객체 정보 연결
-
+        marker1.setMap(naverMap);
+        marker1.setTag(markerInfo1);
 
         MarkerInfo markerInfo2 = new MarkerInfo("2빵", "공대건물");
         Marker marker2 = new Marker();
         marker2.setPosition(coord2);
-        marker2.setMap(naverMap);      //마커 정보
-        marker2.setTag(markerInfo2); //마커 객체 정보 연결
+        marker2.setMap(naverMap);
+        marker2.setTag(markerInfo2);
 
-        // 버튼 생성
         Button detailButton = new Button(this);
-        detailButton.setText("상세페이지로 이동"); //인포윈도우 상세페이지 버튼
+        detailButton.setText("상세페이지로 이동");
 
-        InfoWindow infoWindow = new InfoWindow();//인포윈도우객체생성
+        InfoWindow infoWindow = new InfoWindow();
 
-        naverMap.setOnMapClickListener((pointF, latLng) -> {
-            infoWindow.close();
-        });
 
-// 마커를 클릭하면:
+
         Overlay.OnClickListener listener = overlay -> {
             Marker marker = (Marker) overlay;
             MarkerInfo info = (MarkerInfo) marker.getTag();
 
             if (marker.getInfoWindow() == null) {
-                infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(this) {
+                infoWindow.setAdapter(new InfoWindow.DefaultViewAdapter(this) {
                     @NonNull
                     @Override
-                    public CharSequence getText(@NonNull InfoWindow infoWindow) {
-                        return info != null ? info.getTitle() + "\n" + info.getDescription() : "No info";
+                    protected View getContentView(@NonNull InfoWindow infoWindow) {
+                        View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.custom_info_window, null);
+                        TextView textView = view.findViewById(R.id.text_info);
+                        Button detailButton = view.findViewById(R.id.button_detail);
+
+
+                        textView.setText(info != null ? info.getTitle() + "\n" + info.getDescription() : "No info");
+
+                        // 상세페이지 버튼 클릭 시 동작 설정
+                        detailButton.setOnClickListener(v -> {
+                            // 버튼 클릭 시 상세페이지로 이동하는 기능
+                            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                            startActivity(intent);
+                            infoWindow.close(); // 상세페이지로 이동한 후 인포 윈도우를 닫음
+                        });
+
+
+                        return view;
                     }
                 });
-
                 infoWindow.open(marker);
             } else {
                 infoWindow.close();
@@ -148,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         marker1.setOnClickListener(listener);
         marker2.setOnClickListener(listener);
+
     }
 
     static class MarkerInfo {
