@@ -4,6 +4,7 @@ package com.example.navermaptest;
 
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.Toast;
 import android.Manifest;
 
@@ -114,9 +115,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         marker2.setMap(naverMap);      //마커 정보
         marker2.setTag(markerInfo2); //마커 객체 정보 연결
 
+        // 버튼 생성
+        Button detailButton = new Button(this);
+        detailButton.setText("상세페이지로 이동"); //인포윈도우 상세페이지 버튼
+
         InfoWindow infoWindow = new InfoWindow();//인포윈도우객체생성
-
-
 
         naverMap.setOnMapClickListener((pointF, latLng) -> {
             infoWindow.close();
@@ -135,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         return info != null ? info.getTitle() + "\n" + info.getDescription() : "No info";
                     }
                 });
+
                 infoWindow.open(marker);
             } else {
                 infoWindow.close();
