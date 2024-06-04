@@ -1,22 +1,48 @@
 package com.example.navermaptest;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import com.naver.maps.map.LocationSource;
-import com.naver.maps.map.NaverMap;
 
 public class MyLocationSource implements LocationSource {
 
+    private final LocationManager locationManager;
     private OnLocationChangedListener listener;
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            if (listener != null) {
+                listener.onLocationChanged(location);
+            }
+        }
 
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+        @Override
+        public void onProviderEnabled(String provider) {}
+
+        @Override
+        public void onProviderDisabled(String provider) {}
+    };
+
+    public MyLocationSource(Context context) {
+        this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    @SuppressLint("MissingPermission")
     @Override
     public void activate(OnLocationChangedListener listener) {
         this.listener = listener;
-        // 위치 업데이트를 시작하고, 변경된 위치를 listener에 전달하는 코드를 작성합니다.
-        // 예를 들어, 사용자의 현재 위치를 가져와서 listener.onLocationChanged() 메서드를 호출합니다.
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
     }
 
     @Override
     public void deactivate() {
-        // 위치 업데이트를 중지하는 코드를 작성합니다.
+        locationManager.removeUpdates(locationListener);
     }
 }
